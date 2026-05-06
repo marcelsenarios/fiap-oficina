@@ -33,12 +33,12 @@ Esta opção sobe o banco de dados e a aplicação automaticamente.
    ```
 
 ### Validação Técnica
-Durante a atualização do projeto, a máquina local não tinha `java`/`javac` instalados, então `./mvnw test` retornava erro de `JAVA_HOME`. A validação foi feita via Docker:
+Execute a validação completa com testes e cobertura:
 ```bash
-docker build -t oficina-test .
-docker run --rm -w /app -v "$PWD":/app eclipse-temurin:21-jdk-alpine sh -c "chmod +x mvnw && ./mvnw test"
+./mvnw verify
 ```
-Resultado obtido: `Tests run: 5, Failures: 0, Errors: 0, Skipped: 0`.
+Resultado obtido: `Tests run: 7, Failures: 0, Errors: 0, Skipped: 0`.
+O JaCoCo valida cobertura mínima de 80% nos domínios críticos e gera o relatório em `target/site/jacoco/index.html`.
 
 ---
 
@@ -52,7 +52,7 @@ Resultado obtido: `Tests run: 5, Failures: 0, Errors: 0, Skipped: 0`.
 ### Parte 2: Segurança e Autenticação (2 min)
 - Abra o Swagger.
 - Demonstre o endpoint `/api/auth/login`.
-- Gere um token JWT passando um `username`.
+- Gere um token JWT enviando `username` e `password`.
 - Explique que as APIs administrativas estão protegidas por este token (clique no botão "Authorize" do Swagger e cole o token).
 
 ### Parte 3: Cadastros Administrativos (CRUDs) (3 min)
@@ -62,15 +62,10 @@ Resultado obtido: `Tests run: 5, Failures: 0, Errors: 0, Skipped: 0`.
 
 ### Parte 4: Fluxo da Ordem de Serviço (OS) (5 min)
 1. **Criação:** Abra uma OS vinculando o cliente e o veículo. Mostre o status inicial como `RECEBIDA`.
-2. **Orçamento:** 
-   - Adicione o serviço de "Troca de Óleo".
-   - Adicione 4 unidades da peça "Óleo 5W30".
-   - Consulte `GET /api/os/{id}` e destaque o **Valor Total** calculado automaticamente e os itens detalhados.
-3. **Mudança de Status:** 
-   - Altere para `EM_DIAGNOSTICO`.
-   - Altere para `AGUARDANDO_APROVACAO`.
-   - Altere para `EM_EXECUCAO`. Destaque que, neste momento, o sistema valida e abate as peças do estoque.
-4. **Finalização:** Altere para `FINALIZADA`.
+2. **Fluxo completo:** Use `POST /api/os/completa` para identificar o cliente por CPF/CNPJ, cadastrar ou localizar o veículo pela placa, incluir serviços e peças e gerar o orçamento automaticamente.
+3. **Envio do orçamento:** Use `POST /api/os/{id}/orcamento/enviar` e mostre o status `AGUARDANDO_APROVACAO`.
+4. **Aprovação pelo cliente:** Use `POST /api/public/os/{id}/aprovar?cpfCnpj=...` sem token administrativo. Destaque que a OS entra em `EM_EXECUCAO` e as peças são abatidas do estoque.
+5. **Finalização:** Altere para `FINALIZADA`.
 
 ### Parte 5: Monitoramento e Encerramento (3 min)
 - **Tempo Médio:** Chame o endpoint `/api/os/estatisticas/tempo-medio` e mostre o cálculo do tempo de execução baseado na OS finalizada.

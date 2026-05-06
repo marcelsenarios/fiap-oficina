@@ -28,6 +28,9 @@ out/
 *.temp
 *.swp
 *~
+*.bak
+*.orig
+*.rej
 
 # Package files
 *.jar
@@ -46,6 +49,34 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
+postgres-data/
+pgdata/
 
 # Environment variables
 .env
+.env.*
+!.env.example
+
+# Local recordings and large media generated for the presentation
+recordings/
+videos/
+*.mp4
+*.mov
+*.mkv
+*.webm
+
+# Generated delivery exports.
+# Keep the Markdown sources in docs/ versioned; export PDF locally when submitting.
+docs/*.pdf
+!docs/FINAL_DELIVERY_DOCUMENT.pdf
+docs/*.docx
+docs/*.odt
+
+# Local vulnerability scan exports copied outside target/
+dependency-check-report.*
+owasp-dependency-check-report.*
+security-report.*
+
+# Local HTTP/API scratch files
+*.http.local
+*.curl

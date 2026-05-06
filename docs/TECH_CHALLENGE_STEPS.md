@@ -35,11 +35,13 @@ A aplicação seguirá uma arquitetura em camadas organizada por domínios:
 ## 3. Próximos Passos
 - [x] Ajustar `pom.xml` com dependências de validação, JWT e Swagger.
 - [x] Implementar Entidades e Value Objects.
-- [x] Configurar Spring Security e JWT.
+- [x] Configurar Spring Security e JWT com credenciais administrativas.
 - [x] Implementar APIs de CRUD completo e fluxo de OS.
 - [x] Implementar consulta pública de OS para acompanhamento pelo cliente.
-
+- [x] Implementar criação completa da OS por CPF/CNPJ, veículo, serviços e peças.
+- [x] Implementar envio e aprovação de orçamento pelo cliente.
 - [x] Desenvolver Testes Unitários e de Integração.
+- [x] Configurar JaCoCo com cobertura mínima de 80% nos domínios críticos.
 - [x] Configurar Docker.
 
 ## 4. Como Executar
@@ -60,18 +62,22 @@ A aplicação seguirá uma arquitetura em camadas organizada por domínios:
 
 ### 4.3. Validação Realizada
 - Build Docker validado com `docker build -t oficina-test .`.
-- Testes executados em container JDK 21 com `./mvnw test`.
-- Resultado dos testes: `Tests run: 5, Failures: 0, Errors: 0, Skipped: 0`.
+- Testes e cobertura executados com `./mvnw verify`.
+- Resultado dos testes: `Tests run: 7, Failures: 0, Errors: 0, Skipped: 0`.
+- Resultado de cobertura: regra JaCoCo de 80% nos domínios críticos atendida. Relatório gerado em `target/site/jacoco/index.html`.
 - Observação de ambiente: se a máquina local não tiver Java/JDK 21 ou `JAVA_HOME`, o Maven Wrapper não executa; nesse caso, instale o JDK 21 ou use o container Docker para rodar os testes.
 
 ## 5. Fluxos Principais
-1. **Autenticação:** POST `/api/auth/login?username=admin` para obter o token JWT.
+1. **Autenticação:** POST `/api/auth/login` com `{"username":"admin","password":"admin123"}` para obter o token JWT.
 2. **Cliente:** POST `/api/clientes` (enviar JSON com nome, cpfCnpj, etc).
 3. **Veículo:** POST `/api/veiculos` vinculando o `clienteId`.
 4. **Ordem de Serviço:** POST `/api/os?clienteId=1&veiculoId=1` para iniciar.
 5. **Orçamento:** POST `/api/os/1/servicos` e POST `/api/os/1/pecas`.
 6. **Status:** PATCH `/api/os/1/status?status=EM_DIAGNOSTICO`.
 7. **Consulta do cliente:** GET `/api/public/os?cpfCnpj=12345678909`.
+8. **Fluxo completo:** POST `/api/os/completa` para identificar cliente por CPF/CNPJ, cadastrar veículo, incluir serviços e peças e gerar o orçamento.
+9. **Envio do orçamento:** POST `/api/os/1/orcamento/enviar`.
+10. **Aprovação pelo cliente:** POST `/api/public/os/1/aprovar?cpfCnpj=12345678909`.
 
 ## 6. APIs Implementadas
 
@@ -80,8 +86,9 @@ A aplicação seguirá uma arquitetura em camadas organizada por domínios:
 - `/api/veiculos`: `POST`, `GET`, `GET /{id}`, `PUT /{id}`, `DELETE /{id}`.
 - `/api/servicos`: `POST`, `GET`, `GET /{id}`, `PUT /{id}`, `DELETE /{id}`.
 - `/api/pecas`: `POST`, `GET`, `GET /{id}`, `PUT /{id}`, `DELETE /{id}`.
-- `/api/os`: criação, listagem, detalhamento, exclusão, inclusão de peças/serviços, alteração de status e estatísticas.
+- `/api/os`: criação simples, criação completa, listagem, detalhamento, exclusão, inclusão de peças/serviços, envio de orçamento, alteração de status e estatísticas.
 
 ### Públicas
-- `/api/auth/login`: geração de token JWT para o MVP.
+- `/api/auth/login`: geração de token JWT administrativo com usuário e senha.
 - `/api/public/os?cpfCnpj=...`: acompanhamento de ordens de serviço pelo cliente.
+- `/api/public/os/{id}/aprovar?cpfCnpj=...`: aprovação do orçamento pelo cliente.

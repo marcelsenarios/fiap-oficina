@@ -22,6 +22,10 @@ Para uma compreensão completa do projeto e conformidade com os requisitos do de
 - [**Relatório de Vulnerabilidades**](docs/VULNERABILITY_REPORT.md): Análise de segurança e mitigação de riscos (OWASP).
 - [**Decisões Técnicas**](docs/TECH_CHALLENGE_STEPS.md): Racional sobre a escolha do banco de dados e passos de implementação.
 - [**Transcrição do Vídeo**](docs/TRANSCRICAO_TECH_CHALLENGE.md): Conteúdo de apoio à apresentação gravada.
+- [**Checklist Final**](docs/FINAL_DELIVERY_CHECKLIST.md): Lista operacional para revisar antes de enviar.
+- [**Documento Final de Entrega**](docs/FINAL_DELIVERY_DOCUMENT.md): Modelo para preencher e exportar em PDF.
+- [**Roteiro do Vídeo**](docs/VIDEO_DEMO_SCRIPT.md): Roteiro objetivo para gravação da demonstração.
+- [**Guia de Repositório e PDF**](docs/REPOSITORY_AND_PDF_GUIDE.md): Passos para acesso do avaliador e exportação do PDF.
 
 ---
 
@@ -87,7 +91,21 @@ docker run --rm -w /app -v "$PWD":/app eclipse-temurin:21-jdk-alpine sh -c "chmo
 
 O sistema utiliza **JWT (JSON Web Token)** para proteger rotas administrativas.
 
-1. **Obter Token:** Realize um `POST` em `/api/auth/login?username=admin`.
+1. **Obter Token:** Realize um `POST` em `/api/auth/login`.
+   ```json
+   {
+     "username": "admin",
+     "password": "admin123"
+   }
+   ```
 2. **Autorizar no Swagger:** Clique no botão **Authorize** e insira o valor no formato: `Bearer SEU_TOKEN_AQUI`.
 
 > **Nota:** As rotas de consulta pública (`/api/public/**`) e a documentação do Swagger são acessíveis sem autenticação, conforme os requisitos de negócio para acompanhamento de clientes.
+
+## 🔄 Fluxo principal da OS
+
+- `POST /api/os/completa`: cria a OS identificando o cliente por CPF/CNPJ, cadastra ou reaproveita o veículo pela placa, inclui serviços e peças e calcula o orçamento.
+- `POST /api/os/{id}/orcamento/enviar`: envia o orçamento e move a OS para `AGUARDANDO_APROVACAO`.
+- `POST /api/public/os/{id}/aprovar?cpfCnpj=...`: permite a aprovação pelo cliente e inicia a execução, com baixa automática de estoque.
+
+O fluxo legado por IDs (`POST /api/os?clienteId=...&veiculoId=...`) continua disponível.

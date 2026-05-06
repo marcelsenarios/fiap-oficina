@@ -21,6 +21,8 @@ services:
       DATABASE_URL: jdbc:postgresql://db:5432/oficina
       DATABASE_USER: postgres
       DATABASE_PASS: postgres
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin123
       JWT_SECRET: minha-chave-secreta-muito-segura-e-longa-para-o-jwt
       JWT_EXPIRATION_MS: 86400000
     depends_on:

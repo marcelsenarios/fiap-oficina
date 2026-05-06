@@ -59,6 +59,7 @@ public class OrdemServicoDomainService {
         os.getServicos().add(osServico);
         entityManager.persist(osServico);
         os.calcularValorTotal();
+        moverParaDiagnosticoAoMontarOrcamento(os);
         repository.save(os);
     }
 
@@ -84,7 +85,24 @@ public class OrdemServicoDomainService {
         os.getPecas().add(osPeca);
         entityManager.persist(osPeca);
         os.calcularValorTotal();
+        moverParaDiagnosticoAoMontarOrcamento(os);
         repository.save(os);
+    }
+
+    @Transactional
+    public void enviarOrcamento(OrdemServico os) {
+        if (os.getServicos().isEmpty() && os.getPecas().isEmpty()) {
+            throw new BusinessException("Não é possível enviar orçamento sem serviços ou peças.");
+        }
+        if (os.getStatus() == StatusOrdemServico.RECEBIDA) {
+            os.setStatus(StatusOrdemServico.EM_DIAGNOSTICO);
+        }
+        atualizarStatus(os, StatusOrdemServico.AGUARDANDO_APROVACAO);
+    }
+
+    @Transactional
+    public void aprovarOrcamento(OrdemServico os) {
+        atualizarStatus(os, StatusOrdemServico.EM_EXECUCAO);
     }
 
     @Transactional
@@ -118,6 +136,12 @@ public class OrdemServicoDomainService {
         Set<StatusOrdemServico> permitidos = TRANSICOES_PERMITIDAS.getOrDefault(statusAtual, Set.of());
         if (!permitidos.contains(novoStatus)) {
             throw new BusinessException("Transição de status inválida: " + statusAtual + " -> " + novoStatus);
+        }
+    }
+
+    private void moverParaDiagnosticoAoMontarOrcamento(OrdemServico os) {
+        if (os.getStatus() == StatusOrdemServico.RECEBIDA) {
+            os.setStatus(StatusOrdemServico.EM_DIAGNOSTICO);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.oficina.api.controller;
 
+import com.oficina.application.dto.CriarOrdemServicoRequestDTO;
 import com.oficina.application.dto.OrdemServicoDTO;
 import com.oficina.application.usecase.OrdemServicoUseCase;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +18,19 @@ public class OrdemServicoController {
         return useCase.criar(clienteId, veiculoId);
     }
 
+    @PostMapping("/completa")
+    public OrdemServicoDTO criarCompleta(@RequestBody CriarOrdemServicoRequestDTO request) {
+        return useCase.criarCompleta(request);
+    }
+
     @PatchMapping("/{id}/status")
     public void atualizarStatus(@PathVariable Long id, @RequestParam String status) {
         useCase.atualizarStatus(id, status);
+    }
+
+    @PostMapping("/{id}/orcamento/enviar")
+    public OrdemServicoDTO enviarOrcamento(@PathVariable Long id) {
+        return useCase.enviarOrcamento(id);
     }
 
     @PostMapping("/{id}/pecas")

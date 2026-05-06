@@ -16,4 +16,9 @@ public class ConsultaClienteController {
     public List<OrdemServicoDTO> consultarPorCliente(@RequestParam String cpfCnpj) {
         return useCase.consultarPorCliente(cpfCnpj);
     }
+
+    @PostMapping("/{id}/aprovar")
+    public OrdemServicoDTO aprovarOrcamento(@PathVariable Long id, @RequestParam String cpfCnpj) {
+        return useCase.aprovarOrcamento(id, cpfCnpj);
+    }
 }

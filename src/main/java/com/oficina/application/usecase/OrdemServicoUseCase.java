@@ -1,8 +1,10 @@
 package com.oficina.application.usecase;
 
+import com.oficina.application.dto.CriarOrdemServicoRequestDTO;
 import com.oficina.application.dto.OrdemServicoDTO;
 import com.oficina.application.dto.OrdemServicoPecaDTO;
 import com.oficina.application.dto.OrdemServicoServicoDTO;
+import com.oficina.application.dto.PecaSolicitadaDTO;
 import com.oficina.domain.exception.BusinessException;
 import com.oficina.domain.model.*;
 import com.oficina.domain.repository.*;
@@ -39,6 +41,32 @@ public class OrdemServicoUseCase {
     }
 
     @Transactional
+    public OrdemServicoDTO criarCompleta(CriarOrdemServicoRequestDTO request) {
+        if (request == null) {
+            throw new BusinessException("Dados da Ordem de Serviço são obrigatórios.");
+        }
+
+        Cliente cliente = clienteRepository.findByCpfCnpj(new CpfCnpj(request.getCpfCnpj()))
+                .orElseThrow(() -> new BusinessException("Cliente não encontrado para CPF/CNPJ informado."));
+        Veiculo veiculo = obterOuCadastrarVeiculo(cliente, request);
+        OrdemServico os = domainService.criarOrdemServico(cliente, veiculo);
+
+        for (Long servicoId : request.getServicosIds()) {
+            Servico servico = servicoRepository.findById(servicoId)
+                    .orElseThrow(() -> new BusinessException("Serviço não encontrado: " + servicoId));
+            domainService.adicionarServico(os, servico);
+        }
+
+        for (PecaSolicitadaDTO item : request.getPecas()) {
+            Peca peca = pecaRepository.findById(item.getPecaId())
+                    .orElseThrow(() -> new BusinessException("Peça não encontrada: " + item.getPecaId()));
+            domainService.adicionarPeca(os, peca, item.getQuantidade());
+        }
+
+        return toDTO(os);
+    }
+
+    @Transactional
     public void atualizarStatus(Long id, String status) {
         OrdemServico os = repository.findById(id)
                 .orElseThrow(() -> new BusinessException("Ordem de Serviço não encontrada: " + id));
@@ -65,6 +93,26 @@ public class OrdemServicoUseCase {
         Servico servico = servicoRepository.findById(servicoId)
                 .orElseThrow(() -> new BusinessException("Serviço não encontrado: " + servicoId));
         domainService.adicionarServico(os, servico);
+    }
+
+    @Transactional
+    public OrdemServicoDTO enviarOrcamento(Long id) {
+        OrdemServico os = repository.findById(id)
+                .orElseThrow(() -> new BusinessException("Ordem de Serviço não encontrada: " + id));
+        domainService.enviarOrcamento(os);
+        return toDTO(os);
+    }
+
+    @Transactional
+    public OrdemServicoDTO aprovarOrcamento(Long id, String cpfCnpj) {
+        OrdemServico os = repository.findById(id)
+                .orElseThrow(() -> new BusinessException("Ordem de Serviço não encontrada: " + id));
+        CpfCnpj documento = new CpfCnpj(cpfCnpj);
+        if (!os.getCliente().getCpfCnpj().equals(documento)) {
+            throw new BusinessException("CPF/CNPJ não pertence ao cliente da OS.");
+        }
+        domainService.aprovarOrcamento(os);
+        return toDTO(os);
     }
 
     @Transactional(readOnly = true)
@@ -139,5 +187,27 @@ public class OrdemServicoUseCase {
         dto.setPrecoUnitarioCobrado(osPeca.getPrecoUnitarioCobrado());
         dto.setSubtotal(osPeca.getPrecoUnitarioCobrado().multiply(java.math.BigDecimal.valueOf(osPeca.getQuantidade())));
         return dto;
+    }
+
+    private Veiculo obterOuCadastrarVeiculo(Cliente cliente, CriarOrdemServicoRequestDTO request) {
+        if (request.getVeiculo() == null) {
+            throw new BusinessException("Dados do veículo são obrigatórios.");
+        }
+
+        Placa placa = new Placa(request.getVeiculo().getPlaca());
+        return veiculoRepository.findByPlaca(placa)
+                .map(veiculoExistente -> {
+                    if (!veiculoExistente.getCliente().getId().equals(cliente.getId())) {
+                        throw new BusinessException("Veículo não pertence ao cliente informado.");
+                    }
+                    return veiculoExistente;
+                })
+                .orElseGet(() -> veiculoRepository.save(Veiculo.builder()
+                        .placa(placa)
+                        .marca(request.getVeiculo().getMarca())
+                        .modelo(request.getVeiculo().getModelo())
+                        .ano(request.getVeiculo().getAno())
+                        .cliente(cliente)
+                        .build()));
     }
 }
