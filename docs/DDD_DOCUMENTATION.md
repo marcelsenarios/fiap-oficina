@@ -25,7 +25,6 @@ O Event Storming mapeia a linha do tempo do negócio através de Eventos (Laranj
 ### 2.1. Criação e Acompanhamento da OS
 
 ```mermaid
-viewContext
 graph LR
     subgraph "Abertura e Diagnóstico"
         C1[Atendente] -- "Comando: Identificar Cliente" --> E1(Evento: Cliente Identificado)
