@@ -15,17 +15,13 @@ O sistema foi desenhado seguindo princípios de **Domain-Driven Design (DDD)** e
 
 ## 📄 Documentação de Entrega
 
-Para uma compreensão completa do projeto e conformidade com os requisitos do desafio, consulte os documentos na pasta `docs/`:
+Para a entrega final no repositório GitHub, apenas os seguintes documentos na pasta `docs/` são versionados e mantidos sob controle de versão:
 
-- [**Modelagem DDD**](docs/DDD_DOCUMENTATION.md): Entidades, agregados, linguagem ubíqua e mapeamento de contextos.
-- [**Guia de Demonstração**](docs/GUIA_DEMONSTRACAO.md): Guia passo a passo para validar os fluxos da API no Swagger.
-- [**Relatório de Vulnerabilidades**](docs/VULNERABILITY_REPORT.md): Análise de segurança e mitigação de riscos (OWASP).
-- [**Decisões Técnicas**](docs/TECH_CHALLENGE_STEPS.md): Racional sobre a escolha do banco de dados e passos de implementação.
-- [**Transcrição do Vídeo**](docs/TRANSCRICAO_TECH_CHALLENGE.md): Conteúdo de apoio à apresentação gravada.
-- [**Checklist Final**](docs/FINAL_DELIVERY_CHECKLIST.md): Lista operacional para revisar antes de enviar.
-- [**Documento Final de Entrega**](docs/FINAL_DELIVERY_DOCUMENT.md): Modelo para preencher e exportar em PDF.
-- [**Roteiro do Vídeo**](docs/VIDEO_DEMO_SCRIPT.md): Roteiro objetivo para gravação da demonstração.
-- [**Guia de Repositório e PDF**](docs/REPOSITORY_AND_PDF_GUIDE.md): Passos para acesso do avaliador e exportação do PDF.
+- [**Modelagem DDD**](docs/DDD_DOCUMENTATION.md)
+- [**Documento Final de Entrega**](docs/FINAL_DELIVERY_DOCUMENT.md)
+- [**Relatório de Vulnerabilidades**](docs/VULNERABILITY_REPORT.md)
+
+Os demais arquivos na pasta `docs/` são materiais de apoio para uso local (esboços, roteiros e exports) e não são enviados ao repositório. Eles estão listados no `.gitignore` para evitar commits acidentais.
 
 ---
 
