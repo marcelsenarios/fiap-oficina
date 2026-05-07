@@ -18,7 +18,7 @@
 
 **Repositório privado:** https://github.com/marcelsenarios/fiap-oficina
 
-**Documentação DDD:** [DDD_DOCUMENTATION.md](https://drive.google.com/file/d/1tRThn6TZZkQSRiwm5Bc0Rus20blHTV5R/view?usp=sharing)
+**Documentação DDD:** [DDD_DOCUMENTATION.md](https://github.com/marcelsenarios/fiap-oficina/blob/main/docs/DDD_DOCUMENTATION.md)
 
 **Vídeo de demonstração:** [Vídeo](https://drive.google.com/file/d/19tclslTDuTmGig_ZhtJ_xZSv9hWIxYl8/view?usp=sharing)
 
