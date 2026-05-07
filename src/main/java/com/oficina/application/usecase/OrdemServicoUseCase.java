@@ -129,8 +129,7 @@ public class OrdemServicoUseCase {
     @Transactional(readOnly = true)
     public List<OrdemServicoDTO> consultarPorCliente(String cpfCnpj) {
         CpfCnpj documento = new CpfCnpj(cpfCnpj);
-        return repository.findAll().stream()
-                .filter(os -> os.getCliente().getCpfCnpj().equals(documento))
+        return repository.findByClienteCpfCnpj(documento.getValue()).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
@@ -144,9 +143,7 @@ public class OrdemServicoUseCase {
 
     @Transactional(readOnly = true)
     public Double calcularTempoMedioExecution() {
-        List<OrdemServico> finalizadas = repository.findAll().stream()
-                .filter(os -> os.getStatus() == StatusOrdemServico.FINALIZADA && os.getDataFinalizacao() != null)
-                .collect(Collectors.toList());
+        List<OrdemServico> finalizadas = repository.findByStatusAndDataFinalizacaoIsNotNull(StatusOrdemServico.FINALIZADA);
         
         if (finalizadas.isEmpty()) return 0.0;
 

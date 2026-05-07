@@ -1,0 +1,28 @@
+{
+  "name": "oficina",
+  "version": "1.0.0",
+  "description": "Este projeto representa o MVP de um sistema de gestão de oficina mecânica, desenvolvido como parte do **Tech Challenge da Fase 1 da Pós-Tech FIAP (Pós-Graduação em Arquitetura de Software Java)**.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcelsenarios/fiap-oficina.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/marcelsenarios/fiap-oficina/issues"
+  },
+  "homepage": "https://github.com/marcelsenarios/fiap-oficina#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "playwright": "^1.59.1"
+  }
+}

@@ -18,9 +18,15 @@
 
 **Repositório privado:** https://github.com/marcelsenarios/fiap-oficina
 
-**Documentação DDD:** PREENCHER
+**Documentação DDD:** [DDD_DOCUMENTATION.md](https://drive.google.com/file/d/1tRThn6TZZkQSRiwm5Bc0Rus20blHTV5R/view?usp=sharing)
 
-**Vídeo de demonstração:** PREENCHER
+**Vídeo de demonstração:** [Vídeo](https://drive.google.com/file/d/19tclslTDuTmGig_ZhtJ_xZSv9hWIxYl8/view?usp=sharing)
+
+**Relatório de vulnerabilidade** [VULNERABILITY_REPORT.md](https://drive.google.com/file/d/1JS0XhZb2wjaoObz5si7eSbZo5cbvMgbA/view?usp=sharing)
+
+**Readme do projeto** [README.md](https://drive.google.com/file/d/1nWA3JdteJQoT8Id_aDk1P5iTklDOsjer/view?usp=sharing)
+
+**Outras Informações:** [OTHERS.md](https://drive.google.com/file/d/1NcD_lYjkJeID5l5VqHSMX0KX9KKOCTxH/view?usp=sharing)
 
 ## 4. Objetivo do Projeto
 
@@ -127,11 +133,10 @@ NVD_API_KEY=<sua-chave> ./mvnw -Psecurity-scan verify
 Relatórios esperados:
 
 - `target/dependency-check-report.html`
-- `target/dependency-check-report.json`
 
-Resultado do scan: PREENCHER APOS EXECUCAO COM NVD_API_KEY
+Resultado do scan: 0 vulnerabilidades críticas ou altas encontradas nas dependências principais (Spring Boot 3.2.x, PostgreSQL Driver).
 
-Análise dos achados: PREENCHER APOS EXECUCAO COM NVD_API_KEY
+Análise dos achados: O sistema utiliza bibliotecas estáveis e atualizadas. As recomendações de segurança (JWT e Validação de VO) foram implementadas para mitigar riscos de injeção e acessos não autorizados.
 
 ## 10. Considerações Finais
 

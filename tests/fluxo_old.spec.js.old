@@ -1,0 +1,104 @@
+import { test, expect } from '@playwright/test';
+
+test('fluxo completo oficina via swagger', async ({ page }) => {
+await page.goto('http://localhost:8080/swagger-ui/index.html');
+
+// espera endpoints aparecerem
+await page.waitForSelector('.opblock');
+
+  // 🔐 LOGIN
+// espera swagger carregar
+await page.waitForSelector('.opblock-tag');
+
+// abre primeiro controller (auth normalmente)
+await page.locator('.opblock-tag').first().click();
+
+// espera endpoints aparecerem
+await page.waitForSelector('.opblock');
+
+// clica no PRIMEIRO endpoint POST disponível
+await page.locator('.opblock-post').first().click();
+
+// botão Try it out
+await page.getByRole('button', { name: 'Try it out' }).click();
+
+// preenche body
+await page.locator('textarea').first().fill(`{
+  "username": "admin",
+  "password": "admin123"
+}`);
+
+// executa
+await page.getByRole('button', { name: 'Execute' }).click();
+
+  // ⏳ Aguarda resposta com token
+  await page.waitForTimeout(2000);
+
+  // ⚠️ Copiar token manualmente é mais seguro no vídeo
+  // OU tentar capturar automaticamente (mais avançado)
+
+  // 🧾 CRIAR CLIENTE
+  await page.getByText('clientes-controller').click();
+  await page.getByText('POST /api/clientes').click();
+  await page.getByText('Try it out').click();
+
+  await page.locator('textarea').first().fill(`{
+    "nome": "Cliente Demo",
+    "cpfCnpj": "12345678909",
+    "email": "cliente@demo.com",
+    "telefone": "11999999999"
+  }`);
+
+  await page.getByText('Execute').click();
+
+  await page.waitForTimeout(1000);
+
+  // 🔧 CRIAR SERVIÇO
+  await page.getByText('servicos-controller').click();
+  await page.getByText('POST /api/servicos').click();
+  await page.getByText('Try it out').click();
+
+  await page.locator('textarea').first().fill(`{
+    "nome": "Troca de óleo",
+    "preco": 100
+  }`);
+
+  await page.getByText('Execute').click();
+
+  await page.waitForTimeout(1000);
+
+  // 🧱 CRIAR PEÇA
+  await page.getByText('pecas-controller').click();
+  await page.getByText('POST /api/pecas').click();
+  await page.getByText('Try it out').click();
+
+  await page.locator('textarea').first().fill(`{
+    "nome": "Filtro de óleo",
+    "preco": 50,
+    "estoque": 10
+  }`);
+
+  await page.getByText('Execute').click();
+
+  await page.waitForTimeout(1000);
+
+  // 🚗 CRIAR OS
+  await page.getByText('ordens-controller').click();
+  await page.getByText('POST /api/ordens').click();
+  await page.getByText('Try it out').click();
+
+  await page.locator('textarea').first().fill(`{
+    "cpfCnpjCliente": "12345678909",
+    "placa": "ABC1234",
+    "marca": "Toyota",
+    "modelo": "Corolla",
+    "ano": 2020,
+    "servicos": ["Troca de óleo"],
+    "pecas": ["Filtro de óleo"]
+  }`);
+
+  await page.getByText('Execute').click();
+
+  await page.waitForTimeout(2000);
+
+});

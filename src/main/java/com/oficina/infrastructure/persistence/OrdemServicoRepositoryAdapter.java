@@ -17,4 +17,14 @@ public class OrdemServicoRepositoryAdapter implements OrdemServicoRepository {
     @Override public Optional<OrdemServico> findById(Long id) { return jpaRepository.findById(id); }
     @Override public List<OrdemServico> findAll() { return jpaRepository.findAll(); }
     @Override public void deleteById(Long id) { jpaRepository.deleteById(id); }
+    
+    @Override
+    public List<OrdemServico> findByClienteCpfCnpj(String cpfCnpj) {
+        return jpaRepository.findByClienteCpfCnpjValue(cpfCnpj);
+    }
+
+    @Override
+    public List<OrdemServico> findByStatusAndDataFinalizacaoIsNotNull(com.oficina.domain.model.StatusOrdemServico status) {
+        return jpaRepository.findByStatusAndDataFinalizacaoIsNotNull(status);
+    }
 }
