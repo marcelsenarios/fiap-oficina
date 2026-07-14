@@ -21,4 +21,28 @@ public class ConsultaClienteController {
     public OrdemServicoDTO aprovarOrcamento(@PathVariable Long id, @RequestParam String cpfCnpj) {
         return useCase.aprovarOrcamento(id, cpfCnpj);
     }
+
+    @PostMapping("/{id}/recusar")
+    public OrdemServicoDTO recusarOrcamento(@PathVariable Long id, @RequestParam String cpfCnpj) {
+        return useCase.recusarOrcamento(id, cpfCnpj);
+    }
+
+    @PostMapping("/{id}/notificacao-orcamento")
+    public OrdemServicoDTO receberNotificacaoOrcamento(
+            @PathVariable Long id,
+            @RequestParam String cpfCnpj,
+            @RequestParam boolean aprovado
+    ) {
+        if (aprovado) {
+            return useCase.aprovarOrcamento(id, cpfCnpj);
+        } else {
+            return useCase.recusarOrcamento(id, cpfCnpj);
+        }
+    }
+
+    @GetMapping("/{id}/status")
+    public java.util.Map<String, String> consultarStatus(@PathVariable Long id) {
+        String status = useCase.consultarStatus(id);
+        return java.util.Map.of("id", id.toString(), "status", status);
+    }
 }

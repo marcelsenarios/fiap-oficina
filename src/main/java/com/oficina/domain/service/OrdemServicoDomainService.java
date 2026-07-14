@@ -21,6 +21,7 @@ public class OrdemServicoDomainService {
 
     private final OrdemServicoRepository repository;
     private final PecaRepository pecaRepository;
+    private final EmailService emailService;
     
     @jakarta.persistence.PersistenceContext
     private jakarta.persistence.EntityManager entityManager;
@@ -34,7 +35,11 @@ public class OrdemServicoDomainService {
                 .dataCriacao(LocalDateTime.now())
                 .valorTotal(BigDecimal.ZERO)
                 .build();
-        return repository.save(os);
+        OrdemServico saved = repository.save(os);
+        if (cliente != null && cliente.getEmail() != null) {
+            emailService.enviarEmailStatusOrdemServico(cliente.getEmail(), saved.getId(), saved.getStatus().name());
+        }
+        return saved;
     }
 
     @Transactional
@@ -64,11 +69,16 @@ public class OrdemServicoDomainService {
 
     @Transactional
     public void atualizarStatus(OrdemServico os, StatusOrdemServico novoStatus) {
-        if (novoStatus == StatusOrdemServico.EM_EXECUCAO && os.getStatus() == StatusOrdemServico.AGUARDANDO_APROVACAO) {
+        StatusOrdemServico statusAnterior = os.getStatus();
+        if (novoStatus == StatusOrdemServico.EM_EXECUCAO && statusAnterior == StatusOrdemServico.AGUARDANDO_APROVACAO) {
             baixarEstoque(os);
         }
         os.atualizarStatus(novoStatus);
         repository.save(os);
+        
+        if (statusAnterior != novoStatus && os.getCliente() != null && os.getCliente().getEmail() != null) {
+            emailService.enviarEmailStatusOrdemServico(os.getCliente().getEmail(), os.getId(), novoStatus.name());
+        }
     }
 
     private void baixarEstoque(OrdemServico os) {

@@ -1,5 +1,6 @@
 package com.oficina.application.usecase;
 
+import com.oficina.application.dto.ClienteDTO;
 import com.oficina.application.dto.CriarOrdemServicoRequestDTO;
 import com.oficina.application.dto.OrdemServicoDTO;
 import com.oficina.application.dto.OrdemServicoPecaDTO;
@@ -46,8 +47,7 @@ public class OrdemServicoUseCase {
             throw new BusinessException("Dados da Ordem de Serviço são obrigatórios.");
         }
 
-        Cliente cliente = clienteRepository.findByCpfCnpj(new CpfCnpj(request.getCpfCnpj()))
-                .orElseThrow(() -> new BusinessException("Cliente não encontrado para CPF/CNPJ informado."));
+        Cliente cliente = obterOuCadastrarCliente(request);
         Veiculo veiculo = obterOuCadastrarVeiculo(cliente, request);
         OrdemServico os = domainService.criarOrdemServico(cliente, veiculo);
 
@@ -117,7 +117,85 @@ public class OrdemServicoUseCase {
 
     @Transactional(readOnly = true)
     public List<OrdemServicoDTO> listarTodas() {
-        return repository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
+        return repository.findAll().stream()
+                .filter(os -> os.getStatus() != StatusOrdemServico.FINALIZADA && os.getStatus() != StatusOrdemServico.ENTREGUE)
+                .sorted((os1, os2) -> {
+                    int p1 = getStatusPriority(os1.getStatus());
+                    int p2 = getStatusPriority(os2.getStatus());
+                    if (p1 != p2) {
+                        return Integer.compare(p1, p2);
+                    }
+                    return os1.getDataCriacao().compareTo(os2.getDataCriacao());
+                })
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public String consultarStatus(Long id) {
+        OrdemServico os = repository.findById(id)
+                .orElseThrow(() -> new BusinessException("Ordem de Serviço não encontrada: " + id));
+        return os.getStatus().name();
+    }
+
+    @Transactional
+    public OrdemServicoDTO recusarOrcamento(Long id, String cpfCnpj) {
+        OrdemServico os = repository.findById(id)
+                .orElseThrow(() -> new BusinessException("Ordem de Serviço não encontrada: " + id));
+        CpfCnpj documento = new CpfCnpj(cpfCnpj);
+        if (!os.getCliente().getCpfCnpj().equals(documento)) {
+            throw new BusinessException("CPF/CNPJ não pertence ao cliente da OS.");
+        }
+        domainService.atualizarStatus(os, StatusOrdemServico.EM_DIAGNOSTICO);
+        return toDTO(os);
+    }
+
+    private int getStatusPriority(StatusOrdemServico status) {
+        return switch (status) {
+            case EM_EXECUCAO -> 1;
+            case AGUARDANDO_APROVACAO -> 2;
+            case EM_DIAGNOSTICO -> 3;
+            case RECEBIDA -> 4;
+            default -> 5;
+        };
+    }
+
+    private Cliente obterOuCadastrarCliente(CriarOrdemServicoRequestDTO request) {
+        String doc = request.getCpfCnpj();
+        ClienteDTO cliDto = request.getCliente();
+
+        if (cliDto != null && (doc == null || doc.trim().isEmpty())) {
+            doc = cliDto.getCpfCnpj();
+        }
+
+        if (doc == null || doc.trim().isEmpty()) {
+            throw new BusinessException("CPF/CNPJ do cliente é obrigatório.");
+        }
+
+        CpfCnpj cpfCnpjVal = new CpfCnpj(doc);
+        var clienteOpt = clienteRepository.findByCpfCnpj(cpfCnpjVal);
+        if (clienteOpt.isPresent()) {
+            return clienteOpt.get();
+        }
+
+        if (cliDto == null) {
+            throw new BusinessException("Cliente não cadastrado e dados de cadastro não fornecidos.");
+        }
+
+        if (cliDto.getNome() == null || cliDto.getNome().trim().isEmpty() ||
+            cliDto.getEmail() == null || cliDto.getEmail().trim().isEmpty() ||
+            cliDto.getTelefone() == null || cliDto.getTelefone().trim().isEmpty()) {
+            throw new BusinessException("Para cadastrar um novo cliente, informe nome, email e telefone.");
+        }
+
+        Cliente novoCliente = Cliente.builder()
+                .nome(cliDto.getNome())
+                .cpfCnpj(cpfCnpjVal)
+                .email(cliDto.getEmail())
+                .telefone(cliDto.getTelefone())
+                .build();
+
+        return clienteRepository.save(novoCliente);
     }
 
     @Transactional(readOnly = true)

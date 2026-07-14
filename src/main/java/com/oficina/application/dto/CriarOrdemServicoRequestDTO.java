@@ -6,6 +6,7 @@ import java.util.List;
 
 @Data
 public class CriarOrdemServicoRequestDTO {
+    private ClienteDTO cliente;
     private String cpfCnpj;
     private VeiculoDTO veiculo;
     private List<Long> servicosIds = new ArrayList<>();

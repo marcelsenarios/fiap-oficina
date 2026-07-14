@@ -6,6 +6,7 @@ import com.oficina.application.usecase.OrdemServicoUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/os")
@@ -14,13 +15,29 @@ public class OrdemServicoController {
     private final OrdemServicoUseCase useCase;
 
     @PostMapping
-    public OrdemServicoDTO criar(@RequestParam Long clienteId, @RequestParam Long veiculoId) {
-        return useCase.criar(clienteId, veiculoId);
+    public OrdemServicoDTO criar(
+            @RequestBody(required = false) CriarOrdemServicoRequestDTO request,
+            @RequestParam(required = false) Long clienteId,
+            @RequestParam(required = false) Long veiculoId
+    ) {
+        if (request != null) {
+            return useCase.criarCompleta(request);
+        }
+        if (clienteId != null && veiculoId != null) {
+            return useCase.criar(clienteId, veiculoId);
+        }
+        throw new com.oficina.domain.exception.BusinessException("Dados insuficientes para criação da Ordem de Serviço.");
     }
 
     @PostMapping("/completa")
     public OrdemServicoDTO criarCompleta(@RequestBody CriarOrdemServicoRequestDTO request) {
         return useCase.criarCompleta(request);
+    }
+
+    @GetMapping("/{id}/status")
+    public Map<String, String> consultarStatus(@PathVariable Long id) {
+        String status = useCase.consultarStatus(id);
+        return Map.of("id", id.toString(), "status", status);
     }
 
     @PatchMapping("/{id}/status")
