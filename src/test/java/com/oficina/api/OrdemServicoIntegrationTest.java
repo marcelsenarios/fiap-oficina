@@ -237,6 +237,118 @@ public class OrdemServicoIntegrationTest {
     }
 
     @Test
+    public void deveTestarNovosFluxosFase2() throws Exception {
+        String token = obterTokenAdmin();
+
+        // 1. Criar OS com Cliente novo (que não existe) e Veiculo novo
+        ClienteDTO novoCli = new ClienteDTO();
+        novoCli.setNome("Cliente Novo Autocriado");
+        novoCli.setCpfCnpj("11144477735");
+        novoCli.setEmail("novoautocriado@teste.com");
+        novoCli.setTelefone("11977778888");
+
+        VeiculoDTO novoVeic = new VeiculoDTO();
+        novoVeic.setPlaca("AAA1B22");
+        novoVeic.setMarca("Ford");
+        novoVeic.setModelo("Ka");
+        novoVeic.setAno(2018);
+
+        CriarOrdemServicoRequestDTO request = new CriarOrdemServicoRequestDTO();
+        request.setCliente(novoCli);
+        request.setVeiculo(novoVeic);
+
+        MvcResult result = mockMvc.perform(post("/api/os")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Long osId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
+        org.junit.jupiter.api.Assertions.assertNotNull(osId);
+
+        // 2. Consultar status da OS (Admin e Publico)
+        mockMvc.perform(get("/api/os/" + osId + "/status")
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("RECEBIDA"));
+
+        mockMvc.perform(get("/api/public/os/" + osId + "/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("RECEBIDA"));
+
+        // 3. Adicionar serviço e enviar orçamento
+        ServicoDTO servicoDTO = new ServicoDTO();
+        servicoDTO.setDescricao("Revisão");
+        servicoDTO.setPrecoBase(new BigDecimal("150.00"));
+        MvcResult resServ = mockMvc.perform(post("/api/servicos")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(servicoDTO)))
+                .andExpect(status().isOk())
+                .andReturn();
+        Long servId = objectMapper.readTree(resServ.getResponse().getContentAsString()).get("id").asLong();
+
+        mockMvc.perform(post("/api/os/" + osId + "/servicos")
+                .header("Authorization", token)
+                .param("servicoId", servId.toString()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/os/" + osId + "/orcamento/enviar")
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("AGUARDANDO_APROVACAO"));
+
+        // 4. Testar Recusa de Orçamento
+        mockMvc.perform(post("/api/public/os/" + osId + "/recusar")
+                .param("cpfCnpj", "11144477735"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("EM_DIAGNOSTICO"));
+
+        // 5. Testar Notificação de Orçamento (Unified Endpoint) - Recusar novamente
+        mockMvc.perform(post("/api/os/" + osId + "/orcamento/enviar")
+                .header("Authorization", token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/public/os/" + osId + "/notificacao-orcamento")
+                .param("cpfCnpj", "11144477735")
+                .param("aprovado", "false"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("EM_DIAGNOSTICO"));
+
+        // 6. Testar Notificação de Orçamento (Unified Endpoint) - Aprovar
+        mockMvc.perform(post("/api/os/" + osId + "/orcamento/enviar")
+                .header("Authorization", token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/public/os/" + osId + "/notificacao-orcamento")
+                .param("cpfCnpj", "11144477735")
+                .param("aprovado", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("EM_EXECUCAO"));
+
+        // 7. Listagem de OS e validação de ordenação/filtragem
+        MvcResult resList = mockMvc.perform(get("/api/os")
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andReturn();
+        
+        String listJson = resList.getResponse().getContentAsString();
+        List<OrdemServicoDTO> osList = objectMapper.readValue(listJson, 
+                objectMapper.getTypeFactory().constructCollectionType(List.class, OrdemServicoDTO.class));
+        
+        boolean found = false;
+        for (OrdemServicoDTO os : osList) {
+            if (os.getId().equals(osId)) {
+                found = true;
+            }
+            org.junit.jupiter.api.Assertions.assertNotEquals("FINALIZADA", os.getStatus());
+            org.junit.jupiter.api.Assertions.assertNotEquals("ENTREGUE", os.getStatus());
+        }
+        org.junit.jupiter.api.Assertions.assertTrue(found);
+    }
+
+    @Test
     public void deveProtegerRotasAdministrativasEValidarLogin() throws Exception {
         LoginRequestDTO loginInvalido = new LoginRequestDTO();
         loginInvalido.setUsername("admin");
