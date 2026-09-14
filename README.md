@@ -1,107 +1,100 @@
-# Sistema de Gestão de Oficina - Tech Challenge (Fase 1)
+# FIAP Oficina - Aplicação Back-end Principal
 
-Este projeto representa o MVP de um sistema de gestão de oficina mecânica, desenvolvido como parte do **Tech Challenge da Fase 1 da Pós-Tech FIAP (Pós-Graduação em Arquitetura de Software Java)**.
-
-## 🏛️ Arquitetura e Design
-
-O sistema foi desenhado seguindo princípios de **Domain-Driven Design (DDD)** e organizado em uma estrutura de camadas que favorece a manutenção e a evolução:
-
-- **api**: Porta de entrada (REST Controllers), tratamento global de exceções e documentação OpenAPI (Swagger).
-- **application**: Camada de orquestração com Casos de Uso (UseCases) e objetos de transferência (DTOs).
-- **domain**: O "Core" do software, contendo Entidades, Value Objects (como CPF/CNPJ e Placa com regras de validação ricas) e interfaces de Repositórios.
-- **infrastructure**: Detalhes técnicos e de suporte, como persistência com Spring Data JPA, adaptadores de repositório e configurações de segurança.
+Repositório da **Aplicação Principal Back-end (Java 21 / Spring Boot 3.2)** para gestão completa de ordens de serviço, insumos, clientes e veículos da oficina mecânica, refatorada em **Arquitetura Hexagonal (Clean Architecture)** e instrumentada com **Logs JSON Estruturados e Observabilidade (Micrometer/Actuator)**.
 
 ---
 
-## 📄 Documentação de Entrega
+## 1. Propósito e Arquitetura
 
-Para a entrega final no repositório GitHub, apenas os seguintes documentos na pasta `docs/` são versionados e mantidos sob controle de versão:
+```mermaid
+graph TD
+    subgraph Adaptadores de Entrada (Drivers)
+        REST1[REST Controllers /api/os]
+        REST2[REST Controllers /api/public]
+    end
 
-- [**Modelagem DDD**](docs/DDD_DOCUMENTATION.md)
-- [**Documento Final de Entrega**](docs/FINAL_DELIVERY_DOCUMENT.md)
-- [**Relatório de Vulnerabilidades**](docs/VULNERABILITY_REPORT.md)
+    subgraph Portas de Entrada (Use Cases)
+        UC1[OrdemServicoUseCase]
+        UC2[ClienteUseCase]
+    end
 
-Os demais arquivos na pasta `docs/` são materiais de apoio para uso local (esboços, roteiros e exports) e não são enviados ao repositório. Eles estão listados no `.gitignore` para evitar commits acidentais.
+    subgraph Núcleo do Domínio (Domain)
+        D1[Entidades: OrdemServico, Cliente, Veiculo, Peca, Servico]
+        D2[Domain Service: OrdemServicoDomainService]
+        D3[Value Objects: CpfCnpj, Placa]
+        D4[Interfaces/Ports: Repositories, EmailService]
+    end
+
+    subgraph Adaptadores de Saída (Driven)
+        JPA[JPA Persistence Adapter]
+        LOG[Logstash / JSON Logger Adapter]
+    end
+
+    subgraph Infraestrutura Externa
+        DB[(AWS RDS PostgreSQL)]
+        OBS[CloudWatch / OpenTelemetry]
+    end
+
+    REST1 & REST2 --> UC1
+    UC1 --> D2
+    D2 --> D1
+    D2 --> D4
+    JPA -.->|Implementa| D4
+    LOG -.->|Implementa| D4
+    JPA --> DB
+    LOG --> OBS
+```
 
 ---
 
-## 🛠️ Stack Tecnológica
+## 2. Tecnologias Utilizadas
 
-- **Linguagem:** Java 21 (LTS)
-- **Framework:** Spring Boot 3.2
-- **Segurança:** Spring Security + JWT (Autenticação Stateless)
-- **Banco de Dados:** PostgreSQL (Persistência relacional robusta)
-- **Documentação:** Swagger/OpenAPI 3
-- **Containerização:** Docker & Docker Compose v2
+- **Linguagem**: Java 21 LTS
+- **Framework**: Spring Boot 3.2.5 (Web, Data JPA, Security, Actuator, Validation)
+- **Documentação de API**: Springdoc OpenAPI / Swagger UI
+- **Logs Estruturados**: Logstash Logback Encoder (JSON Format)
+- **Testes & Cobertura**: JUnit 5, Mockito, H2 Database e JaCoCo (>= 80% nos domínios críticos)
+- **Segurança**: OWASP Dependency-Check & JWT Validation
 
 ---
 
-## 🚀 Como Executar
+## 3. Instruções de Execução e Testes
 
-### Via Docker (Recomendado)
+### Execução dos Testes e Cobertura (JaCoCo)
+```bash
+./mvnw clean verify
+```
 
-Na raiz do diretório `oficina/`, execute:
-
+### Execução Local com Docker Compose
 ```bash
 docker compose up --build
 ```
-
-A aplicação estará disponível nos seguintes endereços:
-- **API:** `http://localhost:8080`
-- **Swagger UI:** `http://localhost:8080/swagger-ui.html` (Acesso simplificado à documentação interativa)
-- **PostgreSQL:** `localhost:5432`
-
-### Execução Local
-
-Requisitos: JDK 21 e PostgreSQL 15+.
-
-1. Certifique-se de que um banco de dados chamado `oficina` exista no PostgreSQL.
-2. Configure as variáveis de ambiente (ou aceite os defaults em `application.yml`):
-   ```bash
-   export JWT_SECRET=minha-chave-secreta-muito-segura-e-longa-para-o-jwt
-   ```
-3. Execute via Maven Wrapper:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
+- API Base: `http://localhost:8080`
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- Healthcheck Probes: `http://localhost:8080/actuator/health`
 
 ---
 
-## 🧪 Testes e Validação
+## 4. Endpoints Principais
 
-O projeto prioriza a qualidade através de testes unitários e de integração utilizando **JUnit 5**, **AssertJ** e **H2 Database** (profile `test`).
-
-### Executar testes localmente:
-```bash
-./mvnw test
-```
-
-### Executar testes via Docker (Garante isolamento):
-```bash
-docker run --rm -w /app -v "$PWD":/app eclipse-temurin:21-jdk-alpine sh -c "chmod +x mvnw && ./mvnw test"
-```
+- `POST /api/auth/login`: Autenticação e obtenção do Token JWT.
+- `POST /api/os`: Abertura de Ordem de Serviço unificada (cliente, veículo, serviços, peças).
+- `GET /api/os`: Listagem priorizada de OSs ativas.
+- `GET /api/public/os/{id}/status`: Consulta pública de status da OS.
+- `POST /api/public/os/{id}/aprovar`: Aprovação pública de orçamento pelo cliente.
+- `POST /api/public/os/{id}/recusar`: Recusa pública de orçamento (OS retorna para `EM_DIAGNOSTICO`).
 
 ---
 
-## 🔐 Segurança e Autenticação
+## 5. Pipeline de CI/CD (GitHub Actions)
 
-O sistema utiliza **JWT (JSON Web Token)** para proteger rotas administrativas.
+A pipeline está configurada em `.github/workflows/ci-cd.yml`:
+1. Compilação, testes unitários/integrados e verificação de regra de JaCoCo (80%).
+2. Build multi-stage da imagem Docker e push para o Docker Hub (`marcelsenarios/fiap-oficina-app:latest`).
+3. Deploy em formato Rolling Update no cluster EKS sem indisponibilidade.
 
-1. **Obter Token:** Realize um `POST` em `/api/auth/login`.
-   ```json
-   {
-     "username": "admin",
-     "password": "admin123"
-   }
-   ```
-2. **Autorizar no Swagger:** Clique no botão **Authorize** e insira o valor no formato: `Bearer SEU_TOKEN_AQUI`.
+---
 
-> **Nota:** As rotas de consulta pública (`/api/public/**`) e a documentação do Swagger são acessíveis sem autenticação, conforme os requisitos de negócio para acompanhamento de clientes.
+## 6. Colaboradores Obrigatórios
 
-## 🔄 Fluxo principal da OS
-
-- `POST /api/os/completa`: cria a OS identificando o cliente por CPF/CNPJ, cadastra ou reaproveita o veículo pela placa, inclui serviços e peças e calcula o orçamento.
-- `POST /api/os/{id}/orcamento/enviar`: envia o orçamento e move a OS para `AGUARDANDO_APROVACAO`.
-- `POST /api/public/os/{id}/aprovar?cpfCnpj=...`: permite a aprovação pelo cliente e inicia a execução, com baixa automática de estoque.
-
-O fluxo legado por IDs (`POST /api/os?clienteId=...&veiculoId=...`) continua disponível.
+- `soat-architecture` (Incluso nas permissões do repositório)
